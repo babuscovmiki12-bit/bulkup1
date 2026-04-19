@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BulkUp">
+<meta name="theme-color" content="#0f1a0a">
+<title>BulkUp — Bulking Plan</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap');
+
+:root {
+  --green: #4ade80;
+  --green-dim: #22c55e;
+  --green-dark: #166534;
+  --bg: #0a0f07;
+  --bg2: #111a0d;
+  --bg3: #182211;
+  --bg4: #1f2d17;
+  --text: #f0fce8;
+  --text2: #9cbf8a;
+  --text3: #5a7a4a;
+  --border: rgba(74,222,128,0.12);
+  --border2: rgba(74,222,128,0.22);
+  --amber: #fbbf24;
+  --blue: #60a5fa;
+  --red: #f87171;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overscroll-behavior: none;
+}
+
+body { padding-bottom: env(safe-area-inset-bottom, 20px); }
+
+/* TOP BAR */
+.topbar {
+  background: var(--bg2);
+  padding: 52px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-row { display: flex; justify-content: space-between; align-items: flex-start; }
+.app-name { font-size: 26px; font-weight: 600; color: var(--green); letter-spacing: -0.5px; }
+.day-info { font-size: 13px; color: var(--text2); margin-top: 3px; }
+.kcal-pill {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px; font-weight: 500;
+  background: var(--bg4);
+  color: var(--green);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+}
+.macro-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 14px; }
+.ms { background: var(--bg3); border-radius: var(--radius-sm); padding: 8px 6px; text-align: center; border: 1px solid var(--border); }
+.ms-v { font-size: 15px; font-weight: 600; }
+.ms-l { font-size: 10px; color: var(--text3); margin-top: 2px; letter-spacing: 0.03em; }
+.progress-bar { height: 3px; background: var(--bg4); border-radius: 2px; margin-top: 12px; }
+.progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.4s ease; }
+
+/* NAV */
+.nav {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 210px; z-index: 99;
+}
+.nav-btn {
+  padding: 12px 4px 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 500;
+  color: var(--text3);
+  background: none; border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer; transition: all 0.15s;
+}
+.nav-btn.active { color: var(--green); border-bottom-color: var(--green); }
+
+/* CONTENT */
+.tab-content { padding: 14px 16px; display: none; }
+.tab-content.active { display: block; }
+
+/* DAY TABS */
+.day-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; scrollbar-width: none; }
+.day-tabs::-webkit-scrollbar { display: none; }
+.day-tab {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  background: var(--bg3);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.15s;
+}
+.day-tab.active { background: var(--green); color: #0a0f07; border-color: var(--green); }
+.day-tab.mma-day::after { content: ' ★'; font-size: 10px; }
+
+/* MEAL CARDS */
+.meal-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.meal-card.eaten { border-color: var(--green-dim); }
+.meal-card-header { padding: 14px 16px; cursor: pointer; }
+.mc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.mc-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.mc-tag { font-size: 11px; color: var(--text2); margin-top: 4px; }
+.mc-kcal {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px; font-weight: 500;
+  background: rgba(251,191,36,0.12);
+  color: var(--amber);
+  padding: 4px 10px; border-radius: 20px;
+  flex-shrink: 0; white-space: nowrap;
+}
+.mc-macros { display: flex; gap: 14px; margin-top: 10px; }
+.mc-m { font-size: 12px; color: var(--text3); }
+.mc-m b { color: var(--text2); font-weight: 500; }
+.mc-actions { display: flex; justify-content: space-between; align-items: center; padding: 0 16px 12px; }
+.eaten-btn {
+  font-size: 12px; font-weight: 500;
+  padding: 6px 14px; border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: transparent; color: var(--text2);
+  cursor: pointer; transition: all 0.2s;
+}
+.eaten-btn.done { background: var(--green); color: #0a0f07; border-color: var(--green); }
+.expand-hint { font-size: 11px; color: var(--text3); }
+
+.detail-panel {
+  background: var(--bg3);
+  border-top: 1px solid var(--border);
+  padding: 14px 16px;
+  display: none;
+}
+.detail-panel.open { display: block; }
+.dp-label { font-size: 10px; font-weight: 600; color: var(--green); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.dp-label:not(:first-child) { margin-top: 14px; }
+.dp-text { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+/* SECTION LABEL */
+.section-lbl { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin: 16px 0 8px; }
+.section-lbl:first-child { margin-top: 0; }
+
+/* SCHEDULE */
+.sched-item { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.sched-line { display: flex; flex-direction: column; align-items: center; }
+.sched-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.sched-connector { width: 1px; background: var(--border); flex: 1; min-height: 24px; margin-top: 4px; }
+.sched-time { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); min-width: 42px; padding-top: 2px; flex-shrink: 0; }
+.sched-info { flex: 1; }
+.sched-name { font-size: 13px; font-weight: 500; }
+.sched-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.notif-pill { font-size: 10px; background: rgba(96,165,250,0.12); color: var(--blue); padding: 2px 8px; border-radius: 20px; display: inline-block; margin-top: 4px; }
+
+/* NOTIF TAB */
+.notif-setup {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.notif-setup p { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 12px; }
+.notif-setup ol { font-size: 13px; color: var(--text2); line-height: 1.8; padding-left: 18px; margin-bottom: 12px; }
+.btn-primary {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 600;
+  background: var(--green); color: #0a0f07;
+  border: none; border-radius: var(--radius-sm);
+  padding: 10px 20px; cursor: pointer;
+  width: 100%; transition: opacity 0.2s;
+}
+.btn-primary:active { opacity: 0.8; }
+.notif-status { font-size: 12px; color: var(--text2); margin-top: 8px; text-align: center; }
+
+.notif-item {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+}
+.notif-item-info .ni-name { font-size: 13px; font-weight: 500; }
+.notif-item-info .ni-time { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.toggle-sw {
+  width: 44px; height: 26px;
+  background: var(--bg4); border-radius: 13px;
+  border: 1px solid var(--border2);
+  position: relative; cursor: pointer;
+  flex-shrink: 0; transition: background 0.2s;
+}
+.toggle-sw::after {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  background: var(--text3); border-radius: 50%;
+  top: 2px; left: 2px; transition: left 0.2s, background 0.2s;
+}
+.toggle-sw.on { background: rgba(74,222,128,0.2); border-color: var(--green); }
+.toggle-sw.on::after { left: 20px; background: var(--green); }
+
+/* WEEK TAB */
+.week-item {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+.wi-top { display: flex; justify-content: space-between; align-items: center; }
+.wi-day { font-size: 15px; font-weight: 600; }
+.wi-kcal { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--green); }
+.wi-meals { font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.6; }
+.mma-tag { font-size: 10px; background: rgba(248,113,113,0.12); color: var(--red); padding: 2px 8px; border-radius: 20px; margin-left: 6px; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-row">
+    <div>
+      <div class="app-name">BulkUp</div>
+      <div class="day-info" id="day-info">Se încarcă...</div>
+    </div>
+    <div class="kcal-pill" id="kcal-pill">— kcal</div>
+  </div>
+  <div class="macro-strip">
+    <div class="ms"><div class="ms-v" style="color:#4ade80" id="prog-carb">0%</div><div class="ms-l">CARB</div></div>
+    <div class="ms"><div class="ms-v" style="color:#60a5fa" id="prog-prot">0%</div><div class="ms-l">PROT</div></div>
+    <div class="ms"><div class="ms-v" style="color:#fbbf24" id="prog-fat">0%</div><div class="ms-l">GRĂS</div></div>
+    <div class="ms"><div class="ms-v" id="prog-eaten">0/0</div><div class="ms-l">MESE</div></div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="main-prog" style="width:0%"></div></div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showTab('mese')">Mese</button>
+  <button class="nav-btn" onclick="showTab('orar')">Orar</button>
+  <button class="nav-btn" onclick="showTab('notif')">Notificări</button>
+  <button class="nav-btn" onclick="showTab('saptamana')">Săptămână</button>
+</div>
+
+<div id="tab-mese" class="tab-content active">
+  <div class="day-tabs" id="day-tabs"></div>
+  <div id="meals-list"></div>
+</div>
+
+<div id="tab-orar" class="tab-content">
+  <div id="sched-list"></div>
+</div>
+
+<div id="tab-notif" class="tab-content">
+  <div class="notif-setup">
+    <p>Pentru notificări pe iPhone, adaugă mai întâi aplicația la ecranul principal:</p>
+    <ol>
+      <li>Deschide această pagină în <b>Safari</b></li>
+      <li>Apasă butonul <b>Share</b> (pătrat cu săgeată sus)</li>
+      <li>Alege <b>"Add to Home Screen"</b></li>
+      <li>Denumește-o <b>BulkUp</b> și apasă Add</li>
+      <li>Deschide din iconița de pe ecran și apasă butonul de mai jos</li>
+    </ol>
+    <button class="btn-primary" onclick="requestNotif()">Activează notificările</button>
+    <div class="notif-status" id="notif-status"></div>
+  </div>
+  <div class="section-lbl">Notificări mese — azi</div>
+  <div id="notif-list"></div>
+</div>
+
+<div id="tab-saptamana" class="tab-content">
+  <div id="week-list"></div>
+</div>
+
+<script>
+const DAYS = ['Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă','Duminică'];
+
+const MEALS = {
+  mic1: {
+    name:'Banană + unt de arahide', tag:'Mic dejun rapid',
+    time:'07:30', notif:'07:20',
+    kcal:280, carb:38, prot:8, fat:12,
+    ing:'1 banană medie · 1 lingură unt de arahide (20g)',
+    prep:'Mănâncă banana cu untul de arahide direct. Zero preparare, zero gătit. Rapid și ușor pe stomac — nu îți va provoca probleme dimineața. Creatina o poți lua chiar acum cu puțină apă.'
+  },
+  mic2: {
+    name:'Toast cu ouă și brânză', tag:'Mic dejun rapid',
+    time:'07:30', notif:'07:20',
+    kcal:310, carb:34, prot:20, fat:12,
+    ing:'2 felii pâine integrală · 2 ouă · 40g brânză telemea · puțin unt',
+    prep:'Seara fierbe ouăle 8 min și lasă-le la frigider. Dimineața: prăjește pâinea, taie ouăle și pune brânza. 3 minute. Mănâncă repede și pleacă la 7:55.'
+  },
+  mic3: {
+    name:'Pancakes proteice cu miere', tag:'Mic dejun weekend',
+    time:'08:30', notif:'08:20',
+    kcal:680, carb:78, prot:45, fat:16,
+    ing:'150g fulgi de ovăz · 3 ouă · 300ml lapte · 2 linguri miere · un vârf de praf de copt',
+    prep:'Blendează totul 30 secunde. Prăjește câte o lingură mare în tigaie antiaderentă fără ulei, 2-3 min pe fiecare parte. Servește cu miere. Weekend — ai timp, mănâncă un mic dejun adevărat.'
+  },
+  gust1: {
+    name:'Sandwich dublu cu ton', tag:'Gustare pauza de la școală',
+    time:'10:00', notif:'09:50',
+    kcal:520, carb:52, prot:42, fat:14,
+    ing:'3 felii pâine integrală · 160g ton în apă · 2 ouă fierte tari · 1 lingură maioneză · salată, roșie',
+    prep:'Pregătit complet seara înainte. Scurgi tonul, amesteci cu maioneza, pui pe pâine cu ouăle feliate și legumele. Înfășori în folie și pui în ghiozdan. La pauza de la ora 10 mănânci repede.'
+  },
+  gust2: {
+    name:'Corn cu brânză și ou', tag:'Gustare pauza de la școală',
+    time:'10:00', notif:'09:50',
+    kcal:480, carb:48, prot:30, fat:18,
+    ing:'2 cornuri integrale · 100g brânză telemea · 2 ouă fierte tari · 1 roșie',
+    prep:'Pregătit 100% seara înainte. Taie ouăle și brânza, pune în cornuri cu roșia. Bag în cutie. Mâncat la pauza de la ora 10 la școală.'
+  },
+  gust3: {
+    name:'Brânză de vaci cu fructe uscate', tag:'Gustare',
+    time:'11:00', notif:'10:50',
+    kcal:380, carb:42, prot:30, fat:8,
+    ing:'300g brânză de vaci · 50g stafide sau caise uscate · 1 lingură miere · scorțișoară',
+    prep:'Amesteci totul într-un bol. 2 minute. Poți pregăti seara și mânca a doua zi rece din frigider. Excelent ca gustare bogată în proteine.'
+  },
+  pranz1: {
+    name:'Orez cu piept de pui și broccoli', tag:'Prânz acasă',
+    time:'13:30', notif:'13:20',
+    kcal:850, carb:95, prot:65, fat:20,
+    ing:'300g piept de pui · 80g orez (crud) · 200g broccoli · 2 linguri ulei de măsline · sare, piper, usturoi, boia',
+    prep:'Fierbi orezul 18 min. Condimentezi puiul și îl prăjești în tigaie 6-7 min pe fiecare parte (sau cuptor 200°C 25 min). Aburești broccoli 5 min. Poți pregăti totul seara anterioară și reîncălzești.'
+  },
+  pranz2: {
+    name:'Mămăligă cu ceafă de porc și smântână', tag:'Prânz acasă',
+    time:'13:30', notif:'13:20',
+    kcal:900, carb:88, prot:58, fat:35,
+    ing:'250g mălai · 300g ceafă de porc · 150g smântână · usturoi, sare, piper, cimbru · ulei',
+    prep:'Fierbi mămăliga cu sare 20 min amestecând constant. Condimentezi carnea și o prăjești în tigaie cu ulei 8-10 min pe fiecare parte. Servești cu smântâna și usturoi zdrobit.'
+  },
+  pranz3: {
+    name:'Tocăniță de vită cu cartofi', tag:'Prânz acasă',
+    time:'13:30', notif:'13:20',
+    kcal:920, carb:95, prot:62, fat:30,
+    ing:'400g pulpă de vită · 500g cartofi · 200g morcovi · sos roșii, ceapă, usturoi, dafin, ulei',
+    prep:'Rumenești carnea cuburi în ulei 5 min. Adaugi ceapă, usturoi, sos roșii, apă să acopere, dafin, sare. Fierbe 45 min. Adaugi cartofii și morcovii, mai fierbe 20 min. Gătești duminica pentru toată săptămâna.'
+  },
+  pranz4: {
+    name:'Paste cu carne tocată și parmezan', tag:'Prânz acasă',
+    time:'13:30', notif:'13:20',
+    kcal:820, carb:90, prot:55, fat:22,
+    ing:'250g paste penne · 300g carne tocată vită · 200ml sos roșii · 50g parmezan · usturoi, ulei, busuioc',
+    prep:'Fierbi pastele 10 min. Prăjești carnea cu usturoi 8 min, adaugi sosul 5 min. Amesteci cu pastele. Parmezan ras deasupra. 25 minute total.'
+  },
+  gust_pm1: {
+    name:'Iaurt grecesc cu ovăz și banană', tag:'Gustare după-amiaza',
+    time:'16:00', notif:'15:50',
+    kcal:420, carb:52, prot:28, fat:10,
+    ing:'250g iaurt grecesc 10% · 50g fulgi de ovăz · 1 lingură miere · 1 banană · 10g nuci',
+    prep:'Amesteci totul într-un bol. 2 minute. Mănânci la 16:00 — suficient timp înainte de antrenamentul MMA de la 19-20:00 să se digere complet.'
+  },
+  gust_pm2: {
+    name:'Orez cu lapte și miere', tag:'Gustare după-amiaza',
+    time:'16:00', notif:'15:50',
+    kcal:440, carb:75, prot:14, fat:8,
+    ing:'150g orez · 400ml lapte integral · 2 linguri miere · scorțișoară · 1 măr',
+    prep:'Fierbi orezul în lapte la foc mic 20 min până se îngroașă. Adaugi mierea, scorțișoara și mărul ras. Poți pregăti cu o seară înainte și mânca rece sau reîncălzit.'
+  },
+  gust_pm3: {
+    name:'Toast cu unt de arahide și banana', tag:'Gustare după-amiaza',
+    time:'16:00', notif:'15:50',
+    kcal:410, carb:58, prot:14, fat:16,
+    ing:'3 felii pâine integrală · 60g unt de arahide · 2 banane · 1 lingură miere',
+    prep:'Prăjești pâinea, ungi cu unt de arahide, pui banana feliată și miere. 5 minute. Carbohidrați și grăsimi bune pentru energie.'
+  },
+  pre_mma: {
+    name:'Shake de forță pre/post MMA', tag:'Pre sau post antrenament MMA',
+    time:'18:30', notif:'18:20',
+    kcal:380, carb:55, prot:18, fat:5,
+    ing:'300ml lapte integral · 2 banane · 50g fulgi de ovăz · 5g creatină monohidrat',
+    prep:'Blendezi totul 30 secunde. Dacă MMA e la 19:00 — bei la 18:30. Dacă e la 20:00 — bei la 19:30. Creatina se pune direct în shake. Bananele dau combustibil rapid perfect pentru MMA.'
+  },
+  cina1: {
+    name:'Paste cu carne tocată post-MMA', tag:'Cină după antrenament',
+    time:'21:30', notif:'21:20',
+    kcal:820, carb:90, prot:55, fat:22,
+    ing:'250g paste penne · 300g carne tocată vită · 200ml sos roșii · 50g parmezan · usturoi, ulei, busuioc',
+    prep:'Fierbi pastele 10 min. Prăjești carnea cu usturoi 8 min, adaugi sosul 5 min. Amesteci cu pastele. Parmezan deasupra. 25 minute — mănânci după ce te duși și te relaxezi. Musai să mănânci bine după MMA.'
+  },
+  cina2: {
+    name:'Somon cu cartofi dulci la cuptor', tag:'Cină',
+    time:'20:00', notif:'19:50',
+    kcal:720, carb:65, prot:52, fat:28,
+    ing:'350g file somon · 400g cartofi dulci · 2 linguri ulei de măsline · lămâie, rozmarin, sare, piper',
+    prep:'Preîncălzești cuptorul 200°C. Cartofi cuburi cu ulei și rozmarin 20 min, adaugi somonul stropit cu lămâie 18 min. Pui totul în tavă și uiți de el 40 minute.'
+  },
+  cina3: {
+    name:'Pui la cuptor cu orez și legume', tag:'Cină',
+    time:'20:00', notif:'19:50',
+    kcal:820, carb:92, prot:62, fat:18,
+    ing:'350g pulpe pui dezosate · 200g orez · 200g mix legume congelate · ulei, boia, usturoi granulat, sare, piper',
+    prep:'Condimentezi pulpele și le bagi la cuptor 200°C 35-40 min. Fierbi orezul separat. Sotezi legumele congelate 5-7 min. Simplu, clasic, hrănitor.'
+  },
+  cina4: {
+    name:'Tocăniță de vită cu mămăligă', tag:'Cină',
+    time:'20:00', notif:'19:50',
+    kcal:780, carb:82, prot:52, fat:26,
+    ing:'300g pulpă vită (rest de la prânz) · 200g mălai · smântână, sare',
+    prep:'Dacă ai tocănița de la prânz în frigider, reîncălzești. Fierbi mămăligă proaspătă 20 min. Servești cu smântână. Masa ușoară pentru seara, nu supraîncarci stomacul noaptea.'
+  }
+};
+
+const WEEKLY = [
+  { day:0, mma:true,  meals:['mic1','gust1','pranz1','gust_pm1','pre_mma','cina1'], label:'Luni' },
+  { day:1, mma:false, meals:['mic2','gust2','pranz2','gust_pm2','cina2'], label:'Marți' },
+  { day:2, mma:true,  meals:['mic1','gust1','pranz4','gust_pm1','pre_mma','cina1'], label:'Miercuri' },
+  { day:3, mma:false, meals:['mic2','gust2','pranz3','gust_pm3','cina3'], label:'Joi' },
+  { day:4, mma:true,  meals:['mic2','gust1','pranz1','gust_pm1','pre_mma','cina1'], label:'Vineri' },
+  { day:5, mma:false, meals:['mic3','gust3','pranz3','gust_pm2','cina2'], label:'Sâmbătă' },
+  { day:6, mma:false, meals:['mic3','gust3','pranz4','gust_pm3','cina3'], label:'Duminică' }
+];
+
+const SCHEDULE_FIXED = [
+  { time:'07:30', name:'Trezire + mic dejun', sub:'Plecare la școală 07:55', color:'#4ade80', type:'fix' },
+  { time:'08:00', name:'Începe școala', sub:'Ore până la 13:00', color:'#f87171', type:'fix' },
+  { time:'13:00', name:'Terminat ore', sub:'Posibil ore condus ~1h30', color:'#f87171', type:'fix' }
+];
+const SCHED_MMA = { time:'19:00', name:'Antrenament MMA', sub:'Sau 20:00 — depinde de antrenor', color:'#fb923c', type:'fix' };
+
+const STATE = {
+  currentDay: (new Date().getDay() + 6) % 7,
+  eaten: JSON.parse(localStorage.getItem('bu_eaten') || '{}'),
+  notifOn: JSON.parse(localStorage.getItem('bu_notif') || '{}'),
+  notifGranted: false
+};
+
+function saveEaten(){ localStorage.setItem('bu_eaten', JSON.stringify(STATE.eaten)); }
+function saveNotif(){ localStorage.setItem('bu_notif', JSON.stringify(STATE.notifOn)); }
+
+function getMealList(di){ return WEEKLY[di].meals.map(id => ({id, ...MEALS[id]})); }
+
+function calcTotals(di){
+  return getMealList(di).reduce((a,m)=>({kcal:a.kcal+m.kcal,carb:a.carb+m.carb,prot:a.prot+m.prot,fat:a.fat+m.fat}),{kcal:0,carb:0,prot:0,fat:0});
+}
+
+function calcEaten(di){
+  return getMealList(di).reduce((a,m)=>{
+    const k = di+'_'+m.id;
+    return STATE.eaten[k] ? {kcal:a.kcal+m.kcal,carb:a.carb+m.carb,prot:a.prot+m.prot,fat:a.fat+m.fat,n:a.n+1} : {...a};
+  },{kcal:0,carb:0,prot:0,fat:0,n:0});
+}
+
+function updateHeader(){
+  const di = STATE.currentDay;
+  const w = WEEKLY[di];
+  const tot = calcTotals(di);
+  const eat = calcEaten(di);
+  const meals = getMealList(di);
+  document.getElementById('day-info').textContent = w.label + (w.mma ? ' — zi cu MMA ★' : '');
+  document.getElementById('kcal-pill').textContent = tot.kcal + ' kcal';
+  const pct = v => Math.round(v) + '%';
+  document.getElementById('prog-carb').textContent = eat.n ? pct(eat.carb/tot.carb*100) : '0%';
+  document.getElementById('prog-prot').textContent = eat.n ? pct(eat.prot/tot.prot*100) : '0%';
+  document.getElementById('prog-fat').textContent = eat.n ? pct(eat.fat/tot.fat*100) : '0%';
+  document.getElementById('prog-eaten').textContent = eat.n + '/' + meals.length;
+  document.getElementById('main-prog').style.width = (eat.n/meals.length*100).toFixed(0) + '%';
+}
+
+function renderDayTabs(){
+  const el = document.getElementById('day-tabs');
+  el.innerHTML = '';
+  WEEKLY.forEach((w,i)=>{
+    const t = document.createElement('div');
+    t.className = 'day-tab' + (i===STATE.currentDay?' active':'') + (w.mma?' mma-day':'');
+    t.textContent = w.label.substring(0,3);
+    t.onclick = ()=>{ STATE.currentDay=i; renderDayTabs(); renderMeals(); updateHeader(); renderSchedule(); };
+    el.appendChild(t);
+  });
+}
+
+function renderMeals(){
+  const di = STATE.currentDay;
+  const meals = getMealList(di);
+  const el = document.getElementById('meals-list');
+  el.innerHTML = '';
+  meals.forEach(m=>{
+    const key = di+'_'+m.id;
+    const eaten = !!STATE.eaten[key];
+    const card = document.createElement('div');
+    card.className = 'meal-card' + (eaten?' eaten':'');
+
+    card.innerHTML = `
+      <div class="meal-card-header" data-id="${m.id}">
+        <div class="mc-top">
+          <div>
+            <div class="mc-name">${m.name}</div>
+            <div class="mc-tag">${m.tag} · ${m.time}</div>
+          </div>
+          <div class="mc-kcal">${m.kcal} kcal</div>
+        </div>
+        <div class="mc-macros">
+          <div class="mc-m"><b>${m.carb}g</b> carb</div>
+          <div class="mc-m"><b>${m.prot}g</b> prot</div>
+          <div class="mc-m"><b>${m.fat}g</b> grăs</div>
+        </div>
+      </div>
+      <div class="mc-actions">
+        <button class="eaten-btn${eaten?' done':''}" data-key="${key}">
+          ${eaten ? '✓ Mâncat' : 'Marchează mâncat'}
+        </button>
+        <span class="expand-hint">Apasă pentru detalii</span>
+      </div>
+      <div class="detail-panel" id="dp-${m.id}">
+        <div class="dp-label">Ingrediente</div>
+        <div class="dp-text">${m.ing}</div>
+        <div class="dp-label">Mod de preparare</div>
+        <div class="dp-text">${m.prep}</div>
+      </div>
+    `;
+
+    card.querySelector('.meal-card-header').addEventListener('click', ()=>{
+      document.getElementById('dp-'+m.id).classList.toggle('open');
+    });
+    card.querySelector('.eaten-btn').addEventListener('click', e=>{
+      e.stopPropagation();
+      const k = e.currentTarget.dataset.key;
+      STATE.eaten[k] = !STATE.eaten[k];
+      saveEaten();
+      renderMeals();
+      updateHeader();
+    });
+    el.appendChild(card);
+  });
+}
+
+function renderSchedule(){
+  const di = STATE.currentDay;
+  const meals = getMealList(di);
+  const mealColors = ['#4ade80','#60a5fa','#fbbf24','#c084fc','#34d399','#fb7185'];
+  const events = [...SCHEDULE_FIXED.map(e=>({...e}))];
+  if(WEEKLY[di].mma) events.push({...SCHED_MMA});
+  meals.forEach((m,i)=>{
+    events.push({time:m.time, name:m.name, sub:m.tag+' · '+m.kcal+' kcal', color:mealColors[i%mealColors.length], notif:m.notif, type:'meal'});
+  });
+  events.sort((a,b)=>a.time.localeCompare(b.time));
+
+  const el = document.getElementById('sched-list');
+  el.innerHTML = '<div class="section-lbl">Programul tău complet — '+WEEKLY[di].label+'</div>';
+  events.forEach((ev,i)=>{
+    const item = document.createElement('div');
+    item.className = 'sched-item';
+    item.innerHTML = `
+      <div class="sched-line">
+        <div class="sched-dot" style="background:${ev.color}"></div>
+        ${i < events.length-1 ? '<div class="sched-connector"></div>' : ''}
+      </div>
+      <div class="sched-time">${ev.time}</div>
+      <div class="sched-info">
+        <div class="sched-name">${ev.name}</div>
+        <div class="sched-sub">${ev.sub}</div>
+        ${ev.notif ? `<span class="notif-pill">notificare ${ev.notif}</span>` : ''}
+      </div>
+    `;
+    el.appendChild(item);
+  });
+}
+
+function renderNotifList(){
+  const di = STATE.currentDay;
+  const meals = getMealList(di);
+  const el = document.getElementById('notif-list');
+  el.innerHTML = '';
+  meals.forEach(m=>{
+    const on = STATE.notifOn[m.id] !== false;
+    const item = document.createElement('div');
+    item.className = 'notif-item';
+    item.innerHTML = `
+      <div class="notif-item-info">
+        <div class="ni-name">${m.name}</div>
+        <div class="ni-time">Notificare la ${m.notif} pentru masa de la ${m.time}</div>
+      </div>
+      <div class="toggle-sw${on?' on':''}" data-id="${m.id}"></div>
+    `;
+    item.querySelector('.toggle-sw').addEventListener('click', function(){
+      STATE.notifOn[m.id] = STATE.notifOn[m.id]===false ? true : false;
+      this.classList.toggle('on');
+      saveNotif();
+    });
+    el.appendChild(item);
+  });
+}
+
+function renderWeek(){
+  const el = document.getElementById('week-list');
+  el.innerHTML = '<div class="section-lbl">Plan săptămânal complet</div>';
+  WEEKLY.forEach((w,i)=>{
+    const tot = calcTotals(i);
+    const meals = getMealList(i);
+    const item = document.createElement('div');
+    item.className = 'week-item';
+    item.innerHTML = `
+      <div class="wi-top">
+        <div class="wi-day">${w.label}${w.mma?'<span class="mma-tag">MMA</span>':''}</div>
+        <div class="wi-kcal">${tot.kcal} kcal</div>
+      </div>
+      <div class="wi-meals">${meals.map(m=>m.name).join(' · ')}</div>
+    `;
+    el.appendChild(item);
+  });
+}
+
+function showTab(tab){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  const idx = ['mese','orar','notif','saptamana'].indexOf(tab);
+  document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+  if(tab==='notif'){ renderNotifList(); }
+  if(tab==='saptamana'){ renderWeek(); }
+}
+
+let notifGranted = false;
+function requestNotif(){
+  if(!('Notification' in window)){
+    document.getElementById('notif-status').textContent='Notificările nu sunt suportate. Asigură-te că ai deschis din Home Screen.';
+    return;
+  }
+  Notification.requestPermission().then(p=>{
+    notifGranted = p==='granted';
+    if(p==='granted'){
+      document.getElementById('notif-status').textContent='Notificări activate! Vei fi anunțat cu 10 min înainte de fiecare masă.';
+      scheduleAllNotifs();
+    } else {
+      document.getElementById('notif-status').textContent='Refuzat. Mergi la Setări iPhone > Notificări > Safari/BulkUp și activează.';
+    }
+  });
+}
+
+function scheduleAllNotifs(){
+  const di = STATE.currentDay;
+  getMealList(di).forEach(m=>{
+    if(STATE.notifOn[m.id]===false) return;
+    const [h,min] = m.notif.split(':').map(Number);
+    const target = new Date(); target.setHours(h,min,0,0);
+    const diff = target - Date.now();
+    if(diff > 0){
+      setTimeout(()=>{
+        if(notifGranted) new Notification('BulkUp — Masă în 10 minute', {body: m.name + ' · ' + m.kcal + ' kcal', tag: m.id});
+      }, diff);
+    }
+  });
+}
+
+renderDayTabs();
+renderMeals();
+updateHeader();
+renderSchedule();
+</script>
+</body>
+</html>
